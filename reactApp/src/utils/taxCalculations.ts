@@ -1,6 +1,6 @@
 import type { FilingStatus, Lot } from "../Types";
 
-export const TODAY = new Date('2026-11-13');
+export const TODAY = new Date();
 
 export function isLongTerm(dateStr: string) {
   if (!dateStr) return false;

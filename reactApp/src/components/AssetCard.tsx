@@ -40,8 +40,8 @@ export default function AssetCard(
           <thead>
             <tr className="border-b border-slate-700 text-xs font-semibold text-slate-400 uppercase tracking-wider">
               <th className="py-3 px-3">Purchase Date</th>
-              <th className="py-3 px-3">Shares Owned</th>
-              <th className="py-3 px-3">Cost Basis ($/sh)</th>
+              <th className="py-3 px-3">Amount Bought</th>
+              <th className="py-3 px-3">Cost Basis ($/unit)</th>
               <th className="py-3 px-3">Term</th>
               <th className="py-3 px-3">Shares Sold Under Plan</th>
               <th className="py-3 px-3 text-right">Action</th>
