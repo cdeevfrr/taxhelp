@@ -1,122 +1,114 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useState } from 'react';
+import Disclaimer from './components/Disclaimer';
+import TaxProfile from './components/TaxProfile';
+import AssetCard from './components/AssetCard';
+import HarvestSimulator from './components/HarvestSimulator';
+import { calculateHarvestPlan } from './utils/taxCalculations';
+import type { FilingStatus, Lot } from './Types';
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [state, setState] = useState({
+    filingStatus: 'single' as FilingStatus,
+    ordinaryIncome: 30000,
+    qualifiedDividends: 5000,
+    assetPrice: 150.00,
+    currentSellAmount: 12000,
+    lots: [
+      { id: '1', date: '2023-04-15', amount: 100, costBasis: 60.00 },
+      { id: '2', date: '2024-08-10', amount: 80, costBasis: 110.00 },
+      { id: '3', date: '2026-02-01', amount: 50, costBasis: 140.00 }
+    ] as Array<Lot>
+  });
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+  // Handlers
+  // Crazy untyped handler leftover from when this was ported from javascript. 
+  // Clean it up and type it if you feel like it.
+  const handleProfileChange = (field: string, value: any) => {
+    setState(prev => ({ ...prev, [field]: value }));
+  };
 
-      <div className="ticks"></div>
+  const handleAssetPriceChange = (price: number) => {
+    setState(prev => ({ ...prev, assetPrice: price }));
+  };
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+  const handleSliderChange = (val: number) => {
+    setState(prev => ({ ...prev, currentSellAmount: val }));
+  };
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+  const handleAddLot = () => {
+    setState(prev => {
+      const newId = Math.random().toString()
+      return {
+        ...prev,
+        lots: [...prev.lots, { id: newId, date: '2024-01-01', amount: 50, costBasis: 100.00 }]
+      };
+    });
+  };
+
+  const handleRemoveLot = (id: Lot['id']) => {
+    setState(prev => ({
+      ...prev,
+      lots: prev.lots.filter(l => l.id !== id)
+    }));
+  };
+
+  const handleUpdateLot = (update: Partial<Lot> & Pick<Lot, 'id'>) => {
+    setState(prev => ({
+      ...prev,
+      lots: prev.lots.map(lot => lot.id === update.id ? { ...lot, ...update } : lot)
+    }));
+  };
+
+  // Run calculation engine
+  const calculationResults = calculateHarvestPlan({
+    assetPrice: state.assetPrice,
+    currentSellAmount: state.currentSellAmount,
+    filingStatus: state.filingStatus,
+    lots: state.lots,
+    ordinaryIncome: state.ordinaryIncome,
+    qualifiedDividends: state.qualifiedDividends,
+  });
+
+  // Sync lots with calculated shares sold
+  const finalLots = calculationResults.processedLots;
+  const soldAmounts = Object.fromEntries(
+    finalLots.map(lot_ish => [lot_ish.id, lot_ish.sharesSold])
   )
-}
+  return (
+    <div className="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Capital Gains Harvest Calculator</h1>
+          <p className="text-slate-400 text-sm">Optimize your 0% long-term capital gains tax bracket (React Modular Version).</p>
+        </header>
 
-export default App
+        <Disclaimer />
+
+        <TaxProfile 
+          filingStatus={state.filingStatus}
+          ordinaryIncome={state.ordinaryIncome}
+          qualifiedDividends={state.qualifiedDividends}
+          onChange={handleProfileChange}
+        />
+
+        <AssetCard 
+          lots={finalLots}
+          soldAmounts={soldAmounts}
+          assetPrice={state.assetPrice}
+          onAssetPriceChange={handleAssetPriceChange}
+          onUpdateLot={handleUpdateLot}
+          onAddLot={handleAddLot}
+          onRemoveLot={handleRemoveLot}
+        />
+
+        <HarvestSimulator 
+          currentSellAmount={state.currentSellAmount}
+          maxPortfolioVal={calculationResults.maxPortfolioVal}
+          onSliderChange={handleSliderChange}
+          calculatedPlan={calculationResults}
+        />
+      </div>
+    </div>
+  );
+}
